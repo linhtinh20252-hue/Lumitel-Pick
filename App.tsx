@@ -1,6 +1,7 @@
+
 import React, { useState, useEffect } from 'react';
 import { Player, Pair, Match, TournamentData, MatchStage } from './types';
-import { INITIAL_PLAYERS, GROUP_MATCH_TEMPLATE, LOGO_SVG } from './constants';
+import { INITIAL_PLAYERS, LOGO_SVG } from './constants';
 import { saveTournament, loadTournament, clearTournament } from './services/storageService';
 import { calculateStandings } from './utils/rankings';
 import MatchCard from './components/MatchCard';
@@ -9,6 +10,7 @@ import StandingTable from './components/StandingTable';
 const App: React.FC = () => {
   const [data, setData] = useState<TournamentData | null>(null);
   const [activeTab, setActiveTab] = useState<'athletes' | 'pairs' | 'group' | 'knockout' | 'rules'>('athletes');
+  const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
 
   useEffect(() => {
     const saved = loadTournament();
@@ -28,12 +30,13 @@ const App: React.FC = () => {
       
       const shuffledPlayers = [...INITIAL_PLAYERS].sort(() => Math.random() - 0.5);
       const initialPairs: Pair[] = [];
-      for (let i = 0; i < 8; i++) {
+      const pairCount = Math.floor(shuffledPlayers.length / 2);
+      for (let i = 0; i < pairCount; i++) {
         initialPairs.push({
           id: `pair-${i}`,
           name: `${shuffledPlayers[i*2].name} & ${shuffledPlayers[i*2+1].name}`,
           playerIds: [shuffledPlayers[i*2].id, shuffledPlayers[i*2+1].id],
-          groupId: i < 4 ? 'A' : 'B'
+          groupId: i < Math.ceil(pairCount / 2) ? 'A' : 'B'
         });
       }
       setData({ ...initialData, pairs: initialPairs });
@@ -43,6 +46,25 @@ const App: React.FC = () => {
   useEffect(() => {
     if (data) saveTournament(data);
   }, [data]);
+
+  const addAthlete = () => {
+    if (!data) return;
+    const newId = Date.now().toString();
+    const newPlayer: Player = { id: newId, name: `VĐV MỚI` };
+    setData(prev => prev ? ({
+      ...prev,
+      players: [...prev.players, newPlayer]
+    }) : null);
+  };
+
+  const deleteAthlete = (id: string) => {
+    if (!data) return;
+    setData(prev => prev ? ({
+      ...prev,
+      players: prev.players.filter(p => p.id !== id)
+    }) : null);
+    setConfirmDeleteId(null);
+  };
 
   const updateAthleteName = (id: string, name: string) => {
     setData(prev => prev ? ({
@@ -76,16 +98,21 @@ const App: React.FC = () => {
 
   const generateRandomPairs = () => {
     if (!data) return;
+    if (data.players.length % 2 !== 0) {
+      alert("Số lượng VĐV phải là số chẵn để chia cặp! Hiện có " + data.players.length + " VĐV.");
+      return;
+    }
     const shuffledPlayers = shuffleArray(data.players);
     const newPairs: Pair[] = [];
-    for (let i = 0; i < 8; i++) {
+    const pairCount = shuffledPlayers.length / 2;
+    for (let i = 0; i < pairCount; i++) {
       const p1 = shuffledPlayers[i * 2];
       const p2 = shuffledPlayers[i * 2 + 1];
       newPairs.push({
         id: `pair-${i}`,
         name: `${p1.name} & ${p2.name}`,
         playerIds: [p1.id, p2.id],
-        groupId: i < 4 ? 'A' : 'B'
+        groupId: i < Math.ceil(pairCount / 2) ? 'A' : 'B'
       });
     }
     setData(prev => ({ ...prev!, pairs: newPairs, matches: [] }));
@@ -95,29 +122,34 @@ const App: React.FC = () => {
     if (!data) return;
     const groupA = data.pairs.filter(p => p.groupId === 'A');
     const groupB = data.pairs.filter(p => p.groupId === 'B');
-    if (groupA.length < 4 || groupB.length < 4) return;
+    if (groupA.length < 2 || groupB.length < 2) {
+      alert("Mỗi bảng cần tối thiểu 2 cặp để thi đấu!");
+      return;
+    }
 
     const matches: Match[] = [];
-    GROUP_MATCH_TEMPLATE.forEach((t, i) => {
-      matches.push({
-        id: `ga-${i}`,
-        stage: MatchStage.GROUP_A,
-        pairAId: groupA[t.p1].id,
-        pairBId: groupA[t.p2].id,
-        scoreA: null, scoreB: null, winnerId: null, isCompleted: false,
-        label: `Bảng A: Trận ${i + 1}`,
-        targetScore: data.config.pointsToWinGroup
-      });
-      matches.push({
-        id: `gb-${i}`,
-        stage: MatchStage.GROUP_B,
-        pairAId: groupB[t.p1].id,
-        pairBId: groupB[t.p2].id,
-        scoreA: null, scoreB: null, winnerId: null, isCompleted: false,
-        label: `Bảng B: Trận ${i + 1}`,
-        targetScore: data.config.pointsToWinGroup
-      });
-    });
+    
+    // Logic tạo trận đấu vòng tròn (Round Robin) cho từng bảng
+    const generateMatchesForGroup = (groupPairs: Pair[], stage: MatchStage, groupLabel: string) => {
+      let matchIdx = 1;
+      for (let i = 0; i < groupPairs.length; i++) {
+        for (let j = i + 1; j < groupPairs.length; j++) {
+          matches.push({
+            id: `${stage}-${i}-${j}`,
+            stage: stage,
+            pairAId: groupPairs[i].id,
+            pairBId: groupPairs[j].id,
+            scoreA: null, scoreB: null, winnerId: null, isCompleted: false,
+            label: `${groupLabel}: Trận ${matchIdx++}`,
+            targetScore: data.config.pointsToWinGroup
+          });
+        }
+      }
+    };
+
+    generateMatchesForGroup(groupA, MatchStage.GROUP_A, 'Bảng A');
+    generateMatchesForGroup(groupB, MatchStage.GROUP_B, 'Bảng B');
+
     setData({ ...data, matches });
     setActiveTab('group');
   };
@@ -153,15 +185,18 @@ const App: React.FC = () => {
 
   const generateKnockout = () => {
     if (!data) return;
-    if (standingsA.length < 2 || standingsB.length < 2) return;
+    if (standingsA.length < 2 || standingsB.length < 2) {
+      alert("Cần tối thiểu 2 cặp mỗi bảng để đấu Bán Kết!");
+      return;
+    }
     const sf1: Match = {
       id: 'sf-1', stage: MatchStage.SEMI_FINAL, pairAId: standingsA[0].pairId, pairBId: standingsB[1].pairId,
-      scoreA: null, scoreB: null, winnerId: null, isCompleted: false, label: 'Bán Kết 1 (Nhất A vs Nhì B)',
+      scoreA: null, scoreB: null, winnerId: null, isCompleted: false, label: 'Bán Kết 1',
       targetScore: data.config.pointsToWinKnockout
     };
     const sf2: Match = {
       id: 'sf-2', stage: MatchStage.SEMI_FINAL, pairAId: standingsB[0].pairId, pairBId: standingsA[1].pairId,
-      scoreA: null, scoreB: null, winnerId: null, isCompleted: false, label: 'Bán Kết 2 (Nhất B vs Nhì A)',
+      scoreA: null, scoreB: null, winnerId: null, isCompleted: false, label: 'Bán Kết 2',
       targetScore: data.config.pointsToWinKnockout
     };
     setData({ ...data, matches: [...data.matches.filter(m => m.stage.startsWith('GROUP')), sf1, sf2] });
@@ -203,7 +238,7 @@ const App: React.FC = () => {
             </p>
             <div className="flex flex-wrap justify-center lg:justify-start gap-2 md:gap-4 mt-6">
               <div className="bg-lumitel-yellow text-lumitel-blue px-4 py-2 md:px-6 md:py-3 rounded-xl md:rounded-2xl font-black shadow-[0_5px_0_#CCB500] text-xs md:text-base">HÀ NỘI, 20/12/2025</div>
-              <div className="bg-white/10 backdrop-blur-md border border-white/20 px-4 py-2 md:px-6 md:py-3 rounded-xl md:rounded-2xl font-black text-xs md:text-base">16 VẬN ĐỘNG VIÊN 🎾</div>
+              <div className="bg-white/10 backdrop-blur-md border border-white/20 px-4 py-2 md:px-6 md:py-3 rounded-xl md:rounded-2xl font-black text-xs md:text-base">{data?.players.length || 0} VẬN ĐỘNG VIÊN 🎾</div>
             </div>
           </div>
 
@@ -215,8 +250,6 @@ const App: React.FC = () => {
                 className="w-full h-full object-contain"
               />
             </div>
-            <div className="absolute -top-4 -right-4 text-4xl md:text-7xl animate-bounce">🎾</div>
-            <div className="absolute -bottom-4 -left-4 text-3xl md:text-6xl animate-pulse opacity-70">🏸</div>
           </div>
         </div>
 
@@ -260,12 +293,20 @@ const App: React.FC = () => {
               <h2 className="text-2xl md:text-4xl font-black text-lumitel-blue uppercase italic tracking-tighter flex items-center gap-3">
                 <span className="bg-lumitel-yellow p-2 md:p-3 rounded-xl md:rounded-2xl shadow-lg text-lg md:text-2xl">📝</span> QUẢN LÝ VĐV
               </h2>
-              <p className="text-[10px] md:text-sm text-gray-500 font-bold bg-gray-100 px-3 py-1.5 rounded-lg">Nhấn vào tên để sửa</p>
+              <div className="flex items-center gap-3">
+                <button 
+                  onClick={addAthlete}
+                  className="bg-green-500 text-white px-4 py-2 rounded-xl font-black text-xs md:text-sm shadow-md hover:bg-green-600 active:scale-95 transition-all"
+                >
+                  + THÊM VĐV
+                </button>
+                <p className="text-[10px] md:text-sm text-gray-500 font-bold bg-gray-100 px-3 py-1.5 rounded-lg">Nhấn vào tên để sửa</p>
+              </div>
             </div>
             
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 md:gap-6">
               {data.players.map((player, idx) => (
-                <div key={player.id} className="group flex items-center bg-gray-50 p-4 rounded-xl md:rounded-[1.5rem] border-2 border-transparent hover:border-lumitel-yellow hover:bg-white transition-all duration-300">
+                <div key={player.id} className="group flex items-center bg-gray-50 p-4 rounded-xl md:rounded-[1.5rem] border-2 border-transparent hover:border-lumitel-yellow hover:bg-white transition-all duration-300 relative">
                   <div className="w-8 h-8 md:w-10 md:h-10 bg-lumitel-blue text-white rounded-lg md:rounded-xl flex items-center justify-center font-black text-xs md:text-base shrink-0 shadow-md mr-3 md:mr-4">
                     {idx + 1}
                   </div>
@@ -278,6 +319,32 @@ const App: React.FC = () => {
                       className="w-full bg-transparent border-none focus:ring-0 font-black text-gray-900 text-sm md:text-lg placeholder-gray-300 uppercase italic tracking-tighter truncate"
                     />
                   </div>
+                  
+                  {/* Delete Button UI */}
+                  {confirmDeleteId === player.id ? (
+                    <div className="flex gap-1 animate-in slide-in-from-right duration-200">
+                      <button 
+                        onClick={() => deleteAthlete(player.id)}
+                        className="bg-red-500 text-white text-[8px] px-2 py-1 rounded font-black shadow-sm"
+                      >
+                        XÓA
+                      </button>
+                      <button 
+                        onClick={() => setConfirmDeleteId(null)}
+                        className="bg-gray-200 text-gray-600 text-[8px] px-2 py-1 rounded font-black shadow-sm"
+                      >
+                        HUỶ
+                      </button>
+                    </div>
+                  ) : (
+                    <button 
+                      onClick={() => setConfirmDeleteId(player.id)}
+                      className="text-red-400 hover:text-red-600 opacity-0 group-hover:opacity-100 transition-opacity p-1 active:scale-90"
+                      title="Xoá VĐV"
+                    >
+                      ✕
+                    </button>
+                  )}
                 </div>
               ))}
             </div>
@@ -299,7 +366,7 @@ const App: React.FC = () => {
             <div className="bg-white p-5 md:p-10 rounded-2xl md:rounded-[3rem] shadow-xl md:shadow-2xl border border-gray-100 flex flex-col md:flex-row items-center justify-between gap-5 md:gap-8 text-center md:text-left">
               <div>
                 <h3 className="text-xl md:text-3xl font-black text-lumitel-blue uppercase italic">SẮP XẾP CẶP ĐẤU 👥</h3>
-                <p className="text-gray-500 font-bold text-xs md:text-lg">Bốc thăm ngẫu nhiên 8 cặp</p>
+                <p className="text-gray-500 font-bold text-xs md:text-lg">Bốc thăm ngẫu nhiên {data.players.length / 2} cặp đấu</p>
               </div>
               <button onClick={generateRandomPairs} className="w-full md:w-auto bg-lumitel-yellow text-lumitel-blue px-6 py-3 md:px-8 md:py-5 rounded-xl md:rounded-[1.5rem] font-black shadow-[0_5px_0_#CCB500] hover:translate-y-1 transition-all uppercase italic text-sm md:text-base">🔄 BỐC THĂM LẠI</button>
             </div>
