@@ -6,8 +6,8 @@ import { calculateStandings } from './utils/rankings';
 import MatchCard from './components/MatchCard';
 import StandingTable from './components/StandingTable';
 
-// Hiệu ứng pháo hoa rực rỡ hơn
-const Confetti = ({ onClose }: { onClose: () => void }) => {
+// Hiệu ứng pháo hoa rực rỡ với thông tin đội vô địch
+const Confetti = ({ onClose, winnerName }: { onClose: () => void; winnerName: string }) => {
   return (
     <div className="fixed inset-0 pointer-events-none z-[100] overflow-hidden">
       {[...Array(80)].map((_, i) => (
@@ -26,13 +26,19 @@ const Confetti = ({ onClose }: { onClose: () => void }) => {
         />
       ))}
       <div className="absolute inset-0 bg-black/40 backdrop-blur-md flex items-center justify-center animate-in fade-in duration-700 pointer-events-auto">
-         <div className="bg-white p-12 md:p-20 rounded-[4rem] shadow-2xl border-[12px] border-lumitel-yellow text-center transform scale-110 animate-bounce">
-            <div className="text-7xl md:text-9xl mb-6">🏆</div>
-            <h2 className="text-4xl md:text-8xl font-black text-lumitel-blue mb-4 italic uppercase tracking-tighter leading-none">NHÀ VÔ ĐỊCH!</h2>
-            <p className="text-lg md:text-3xl font-bold text-gray-500 uppercase tracking-[0.3em] mb-10">KỶ NIỆM 10 NĂM LUMITEL</p>
+         <div className="bg-white p-10 md:p-16 rounded-[3rem] md:rounded-[4rem] shadow-2xl border-[8px] md:border-[12px] border-lumitel-yellow text-center transform scale-100 md:scale-110 animate-bounce max-w-[90vw]">
+            <div className="text-6xl md:text-8xl mb-4">🏆</div>
+            <h2 className="text-3xl md:text-6xl font-black text-lumitel-blue mb-4 italic uppercase tracking-tighter leading-none">NHÀ VÔ ĐỊCH!</h2>
+            
+            <div className="mb-8 space-y-2">
+              <p className="text-lg md:text-2xl font-bold text-gray-600 uppercase">Chúc mừng đội vô địch</p>
+              <p className="text-2xl md:text-5xl font-black text-lumitel-blue uppercase italic tracking-tighter drop-shadow-sm">{winnerName}</p>
+            </div>
+
+            <p className="text-xs md:text-lg font-bold text-gray-400 uppercase tracking-[0.3em] mb-10">KỶ NIỆM 10 NĂM LUMITEL</p>
             <button 
               onClick={onClose}
-              className="bg-lumitel-blue text-white px-10 py-4 rounded-full font-black hover:scale-110 transition-transform pointer-events-auto shadow-xl text-xl uppercase italic"
+              className="bg-lumitel-blue text-white px-10 py-4 rounded-full font-black hover:scale-110 transition-transform pointer-events-auto shadow-xl text-lg md:text-xl uppercase italic active:scale-95"
             >
               HOÀN TẤT GIẢI ĐẤU
             </button>
@@ -164,8 +170,6 @@ const App: React.FC = () => {
     }
 
     const matches: Match[] = [];
-    
-    // Logic tạo trận đấu vòng tròn (Round Robin) cho từng bảng
     const generateMatchesForGroup = (groupPairs: Pair[], stage: MatchStage, groupLabel: string) => {
       let matchIdx = 1;
       for (let i = 0; i < groupPairs.length; i++) {
@@ -197,7 +201,6 @@ const App: React.FC = () => {
         ...m, scoreA, scoreB, winnerId: scoreA > scoreB ? m.pairAId : m.pairBId, isCompleted: true
       } : m));
 
-      // Kiểm tra nếu là trận chung kết được cập nhật xong
       const currentMatch = newMatches.find(m => m.id === matchId);
       if (currentMatch?.stage === MatchStage.FINAL && currentMatch.isCompleted) {
         setShowCelebration(true);
@@ -264,14 +267,17 @@ const App: React.FC = () => {
     setData({ ...data, matches: [...data.matches.filter(m => m.stage !== MatchStage.FINAL && m.stage !== MatchStage.THIRD_PLACE), third, final] });
   };
 
+  // Lấy tên đội vô địch
+  const finalMatch = data?.matches.find(m => m.stage === MatchStage.FINAL && m.isCompleted);
+  const winningPair = finalMatch ? data?.pairs.find(p => p.id === finalMatch.winnerId) : null;
+  const winnerName = winningPair?.name || "Đang cập nhật...";
+
   return (
     <div className="min-h-screen pb-20 bg-gray-50 text-gray-900 selection:bg-lumitel-yellow selection:text-lumitel-blue">
-      {showCelebration && <Confetti onClose={() => setShowCelebration(false)} />}
+      {showCelebration && <Confetti onClose={() => setShowCelebration(false)} winnerName={winnerName} />}
 
-      {/* 🚀 RESPONSIVE HEADER */}
       <header className="bg-lumitel-blue text-white overflow-hidden relative shadow-2xl border-b-[4px] md:border-b-[6px] border-lumitel-yellow">
         <div className="max-w-7xl mx-auto px-4 md:px-6 py-8 md:py-12 flex flex-col lg:flex-row items-center justify-between gap-6 md:gap-10 relative z-10">
-          
           <div className="text-center lg:text-left flex-1">
             <div className="inline-block bg-white/10 backdrop-blur-md border border-white/20 px-3 py-1 rounded-xl mb-4 transform -rotate-2">
               <span className="text-lumitel-yellow font-black tracking-widest uppercase italic text-[10px] md:text-sm">Hội Bu Kiều Burundi Presents</span>
@@ -287,23 +293,16 @@ const App: React.FC = () => {
               <div className="bg-white/10 backdrop-blur-md border border-white/20 px-4 py-2 md:px-6 md:py-3 rounded-xl md:rounded-2xl font-black text-xs md:text-base">{data?.players.length || 0} VẬN ĐỘNG VIÊN 🎾</div>
             </div>
           </div>
-
           <div className="relative shrink-0">
             <div className="w-48 h-48 md:w-80 md:h-80 bg-white rounded-[2rem] md:rounded-[3rem] p-3 md:p-4 shadow-[0_20px_50px_rgba(0,0,0,0.4)] border-4 border-lumitel-yellow transform rotate-3 hover:rotate-0 transition-all duration-700 flex items-center justify-center overflow-hidden">
-              <img 
-                src={LOGO_SVG}
-                alt="Logo Hội Bu Kiều"
-                className="w-full h-full object-contain"
-              />
+              <img src={LOGO_SVG} alt="Logo" className="w-full h-full object-contain" />
             </div>
           </div>
         </div>
-
         <div className="absolute top-0 right-0 w-64 h-64 md:w-96 md:h-96 bg-white/5 rounded-full -mr-32 -mt-32 blur-3xl"></div>
         <div className="absolute bottom-0 left-0 w-48 h-48 md:w-72 md:h-72 bg-lumitel-yellow/10 rounded-full -ml-24 -mb-24 blur-3xl"></div>
       </header>
 
-      {/* MOBILE-FRIENDLY NAV */}
       <nav className="bg-white/90 backdrop-blur-xl border-b sticky top-0 z-50 shadow-sm overflow-hidden">
         <div className="max-w-6xl mx-auto px-2 py-2 flex justify-start md:justify-center space-x-2 md:space-x-4 overflow-x-auto no-scrollbar">
           {[
@@ -331,8 +330,6 @@ const App: React.FC = () => {
       </nav>
 
       <main className="max-w-6xl mx-auto p-3 md:p-10">
-        
-        {/* ATHLETE TAB */}
         {activeTab === 'athletes' && data && (
           <div className="bg-white p-5 md:p-10 rounded-2xl md:rounded-[3rem] shadow-xl md:shadow-2xl border border-gray-100">
             <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 md:mb-10 gap-3 md:gap-4">
@@ -340,165 +337,93 @@ const App: React.FC = () => {
                 <span className="bg-lumitel-yellow p-2 md:p-3 rounded-xl md:rounded-2xl shadow-lg text-lg md:text-2xl">📝</span> QUẢN LÝ VĐV
               </h2>
               <div className="flex items-center gap-3">
-                <button 
-                  onClick={addAthlete}
-                  className="bg-green-500 text-white px-4 py-2 rounded-xl font-black text-xs md:text-sm shadow-md hover:bg-green-600 active:scale-95 transition-all"
-                >
-                  + THÊM VĐV
-                </button>
-                <p className="text-[10px] md:text-sm text-gray-500 font-bold bg-gray-100 px-3 py-1.5 rounded-lg">Nhấn vào tên để sửa</p>
+                <button onClick={addAthlete} className="bg-green-500 text-white px-4 py-2 rounded-xl font-black text-xs md:text-sm shadow-md hover:bg-green-600 transition-all uppercase">+ Thêm VĐV</button>
+                <p className="text-[10px] md:text-sm text-gray-500 font-bold bg-gray-100 px-3 py-1.5 rounded-lg">Nhấn tên để sửa</p>
               </div>
             </div>
-            
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 md:gap-6">
               {data.players.map((player, idx) => (
-                <div key={player.id} className="group flex items-center bg-gray-50 p-4 rounded-xl md:rounded-[1.5rem] border-2 border-transparent hover:border-lumitel-yellow hover:bg-white transition-all duration-300 relative">
-                  <div className="w-8 h-8 md:w-10 md:h-10 bg-lumitel-blue text-white rounded-lg md:rounded-xl flex items-center justify-center font-black text-xs md:text-base shrink-0 shadow-md mr-3 md:mr-4">
-                    {idx + 1}
-                  </div>
+                <div key={player.id} className="group flex items-center bg-gray-50 p-4 rounded-xl md:rounded-[1.5rem] border-2 border-transparent hover:border-lumitel-yellow transition-all duration-300 relative shadow-sm">
+                  <div className="w-8 h-8 md:w-10 md:h-10 bg-lumitel-blue text-white rounded-lg flex items-center justify-center font-black text-xs md:text-base shrink-0 mr-3">{idx + 1}</div>
                   <div className="flex-1 overflow-hidden">
-                    <label className="text-[8px] font-black text-gray-400 uppercase tracking-widest block">VĐV</label>
-                    <input 
-                      type="text" 
-                      value={player.name}
-                      onChange={(e) => updateAthleteName(player.id, e.target.value)}
-                      className="w-full bg-transparent border-none focus:ring-0 font-black text-gray-900 text-sm md:text-lg placeholder-gray-300 uppercase italic tracking-tighter truncate"
-                    />
+                    <input type="text" value={player.name} onChange={(e) => updateAthleteName(player.id, e.target.value)} className="w-full bg-transparent border-none focus:ring-0 font-black text-gray-900 text-sm md:text-base uppercase italic truncate" />
                   </div>
-                  
-                  {/* Delete Button UI */}
                   {confirmDeleteId === player.id ? (
-                    <div className="flex gap-1 animate-in slide-in-from-right duration-200">
-                      <button 
-                        onClick={() => deleteAthlete(player.id)}
-                        className="bg-red-500 text-white text-[8px] px-2 py-1 rounded font-black shadow-sm"
-                      >
-                        XÓA
-                      </button>
-                      <button 
-                        onClick={() => setConfirmDeleteId(null)}
-                        className="bg-gray-200 text-gray-600 text-[8px] px-2 py-1 rounded font-black shadow-sm"
-                      >
-                        HUỶ
-                      </button>
-                    </div>
+                    <button onClick={() => deleteAthlete(player.id)} className="bg-red-500 text-white text-[8px] px-2 py-1 rounded font-black">XÓA</button>
                   ) : (
-                    <button 
-                      onClick={() => setConfirmDeleteId(player.id)}
-                      className="text-red-400 hover:text-red-600 opacity-0 group-hover:opacity-100 transition-opacity p-1 active:scale-90"
-                      title="Xoá VĐV"
-                    >
-                      ✕
-                    </button>
+                    <button onClick={() => setConfirmDeleteId(player.id)} className="text-red-400 hover:text-red-600 opacity-0 group-hover:opacity-100 transition-opacity p-1">✕</button>
                   )}
                 </div>
               ))}
             </div>
-
-            <div className="mt-8 md:mt-16 flex justify-center">
-              <button 
-                onClick={() => setActiveTab('pairs')}
-                className="w-full md:w-auto bg-lumitel-blue text-white px-8 md:px-14 py-4 md:py-6 rounded-xl md:rounded-[2rem] font-black text-base md:text-2xl shadow-xl hover:scale-105 active:scale-95 transition-all flex items-center justify-center gap-3 uppercase italic"
-              >
-                TIẾP TỤC ➔
-              </button>
-            </div>
+            <div className="mt-16 flex justify-center"><button onClick={() => setActiveTab('pairs')} className="bg-lumitel-blue text-white px-14 py-6 rounded-[2rem] font-black text-2xl shadow-xl hover:scale-105 active:scale-95 transition-all uppercase italic">TIẾP TỤC ➔</button></div>
           </div>
         )}
 
-        {/* PAIRS TAB */}
         {activeTab === 'pairs' && data && (
           <div className="space-y-6 md:space-y-12">
-            <div className="bg-white p-5 md:p-10 rounded-2xl md:rounded-[3rem] shadow-xl md:shadow-2xl border border-gray-100 flex flex-col md:flex-row items-center justify-between gap-5 md:gap-8 text-center md:text-left">
+            <div className="bg-white p-5 md:p-10 rounded-2xl md:rounded-[3rem] shadow-xl flex flex-col md:flex-row items-center justify-between gap-5 text-center md:text-left border border-gray-100">
               <div>
                 <h3 className="text-xl md:text-3xl font-black text-lumitel-blue uppercase italic">SẮP XẾP CẶP ĐẤU 👥</h3>
-                <p className="text-gray-500 font-bold text-xs md:text-lg">Bốc thăm ngẫu nhiên {data.players.length / 2} cặp đấu</p>
+                <p className="text-gray-500 font-bold text-xs md:text-lg italic">Bốc thăm chia cặp tự động</p>
               </div>
-              <button onClick={generateRandomPairs} className="w-full md:w-auto bg-lumitel-yellow text-lumitel-blue px-6 py-3 md:px-8 md:py-5 rounded-xl md:rounded-[1.5rem] font-black shadow-[0_5px_0_#CCB500] hover:translate-y-1 transition-all uppercase italic text-sm md:text-base">🔄 BỐC THĂM LẠI</button>
+              <button onClick={generateRandomPairs} className="bg-lumitel-yellow text-lumitel-blue px-8 py-4 rounded-[1.5rem] font-black shadow-[0_5px_0_#CCB500] hover:translate-y-1 transition-all uppercase italic">🔄 BỐC THĂM LẠI</button>
             </div>
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 md:gap-10">
-              <div className="space-y-4 md:space-y-6">
-                <h4 className="text-lg md:text-2xl font-black text-lumitel-blue flex items-center gap-3 px-2 uppercase italic">BẢNG A</h4>
-                {data.pairs.filter(p => p.groupId === 'A').map((pair, idx) => (
-                   <div key={pair.id} className="bg-white p-5 md:p-8 rounded-xl md:rounded-[2rem] shadow-lg border-2 border-transparent hover:border-lumitel-blue">
-                      <input type="text" value={pair.name} onChange={(e) => updatePairName(pair.id, e.target.value)} className="w-full text-lg md:text-2xl font-black text-lumitel-blue bg-transparent border-none focus:ring-0 uppercase italic tracking-tighter truncate" />
-                      <span className="text-[8px] md:text-[10px] bg-blue-50 text-lumitel-blue px-2 md:px-3 py-1 rounded-full font-black uppercase mt-1 inline-block">Cặp số A{idx+1}</span>
-                   </div>
-                ))}
-              </div>
-              <div className="space-y-4 md:space-y-6">
-                <h4 className="text-lg md:text-2xl font-black text-lumitel-blue flex items-center gap-3 px-2 uppercase italic">BẢNG B</h4>
-                {data.pairs.filter(p => p.groupId === 'B').map((pair, idx) => (
-                   <div key={pair.id} className="bg-white p-5 md:p-8 rounded-xl md:rounded-[2rem] shadow-lg border-2 border-transparent hover:border-lumitel-blue">
-                      <input type="text" value={pair.name} onChange={(e) => updatePairName(pair.id, e.target.value)} className="w-full text-lg md:text-2xl font-black text-lumitel-blue bg-transparent border-none focus:ring-0 uppercase italic tracking-tighter truncate" />
-                      <span className="text-[8px] md:text-[10px] bg-blue-50 text-lumitel-blue px-2 md:px-3 py-1 rounded-full font-black uppercase mt-1 inline-block">Cặp số B{idx+1}</span>
-                   </div>
-                ))}
-              </div>
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-10">
+              {['A', 'B'].map(g => (
+                <div key={g} className="space-y-4 md:space-y-6">
+                  <h4 className="text-lg md:text-2xl font-black text-lumitel-blue flex items-center gap-3 px-2 uppercase italic">BẢNG {g}</h4>
+                  {data.pairs.filter(p => p.groupId === g).map((pair, idx) => (
+                    <div key={pair.id} className="bg-white p-5 md:p-8 rounded-xl md:rounded-[2rem] shadow-lg border-2 border-transparent hover:border-lumitel-blue transition-all">
+                      <input type="text" value={pair.name} onChange={(e) => updatePairName(pair.id, e.target.value)} className="w-full text-lg md:text-2xl font-black text-lumitel-blue bg-transparent border-none focus:ring-0 uppercase italic truncate" />
+                      <span className="text-[8px] md:text-[10px] bg-blue-50 text-lumitel-blue px-2 md:px-3 py-1 rounded-full font-black uppercase mt-1 inline-block">Cặp {g}{idx+1}</span>
+                    </div>
+                  ))}
+                </div>
+              ))}
             </div>
-            <div className="flex justify-center"><button onClick={createGroupMatches} className="w-full md:w-auto bg-lumitel-blue text-white px-8 md:px-14 py-4 md:py-7 rounded-xl md:rounded-[2rem] font-black text-base md:text-2xl shadow-xl hover:bg-blue-800 transition-all uppercase italic">BẮT ĐẦU VÒNG BẢNG ➔</button></div>
+            <div className="flex justify-center"><button onClick={createGroupMatches} className="bg-lumitel-blue text-white px-14 py-7 rounded-[2rem] font-black text-2xl shadow-xl active:scale-95 transition-all uppercase italic">BẮT ĐẦU VÒNG BẢNG ➔</button></div>
           </div>
         )}
 
-        {/* GROUP TAB */}
-        {activeTab === 'group' && data && data.matches.length > 0 && (
+        {activeTab === 'group' && data && (
           <div className="space-y-8 md:space-y-16">
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 md:gap-10">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-10">
               <StandingTable title="BXH BẢNG A 🥇" standings={standingsA} />
               <StandingTable title="BXH BẢNG B 🥇" standings={standingsB} />
             </div>
-            
-            <div className="space-y-8 md:space-y-16">
-              <div className="space-y-6 md:space-y-10">
-                <div className="flex items-center gap-3">
-                   <div className="w-10 h-10 md:w-12 md:h-12 bg-lumitel-yellow rounded-xl md:rounded-2xl flex items-center justify-center text-xl md:text-2xl shadow-lg">📅</div>
-                   <h2 className="text-xl md:text-3xl font-black text-lumitel-blue border-b-4 md:border-b-8 border-lumitel-yellow inline-block pb-1 md:pb-2 uppercase italic">LỊCH THI ĐẤU BẢNG A</h2>
-                </div>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-8">
-                  {data.matches.filter(m => m.stage === MatchStage.GROUP_A).map(m => (
+            {['GROUP_A', 'GROUP_B'].map(st => (
+              <div key={st} className="space-y-6 md:space-y-10">
+                <h2 className="text-xl md:text-3xl font-black text-lumitel-blue border-b-4 border-lumitel-yellow inline-block pb-1 uppercase italic">{st === 'GROUP_A' ? 'LỊCH ĐẤU BẢNG A' : 'LỊCH ĐẤU BẢNG B'}</h2>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8">
+                  {data.matches.filter(m => m.stage === st).map(m => (
                     <MatchCard key={m.id} match={m} pairA={data.pairs.find(p => p.id === m.pairAId)!} pairB={data.pairs.find(p => p.id === m.pairBId)!} onUpdateScore={updateMatchScore} />
                   ))}
                 </div>
               </div>
-
-              <div className="space-y-6 md:space-y-10">
-                <div className="flex items-center gap-3">
-                   <div className="w-10 h-10 md:w-12 md:h-12 bg-lumitel-yellow rounded-xl md:rounded-2xl flex items-center justify-center text-xl md:text-2xl shadow-lg">📅</div>
-                   <h2 className="text-xl md:text-3xl font-black text-lumitel-blue border-b-4 md:border-b-8 border-lumitel-yellow inline-block pb-1 md:pb-2 uppercase italic">LỊCH THI ĐẤU BẢNG B</h2>
-                </div>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-8">
-                  {data.matches.filter(m => m.stage === MatchStage.GROUP_B).map(m => (
-                    <MatchCard key={m.id} match={m} pairA={data.pairs.find(p => p.id === m.pairAId)!} pairB={data.pairs.find(p => p.id === m.pairBId)!} onUpdateScore={updateMatchScore} />
-                  ))}
-                </div>
-              </div>
-            </div>
-
-            <div className="flex justify-center pt-8"><button onClick={generateKnockout} className="w-full md:w-auto bg-lumitel-yellow text-lumitel-blue px-8 md:px-12 py-4 md:py-6 rounded-xl md:rounded-[2rem] font-black text-lg md:text-2xl shadow-xl hover:scale-105 transition-all border-4 border-lumitel-blue uppercase italic">TIẾN VÀO BÁN KẾT ➔</button></div>
+            ))}
+            <div className="flex justify-center"><button onClick={generateKnockout} className="bg-lumitel-yellow text-lumitel-blue px-12 py-6 rounded-[2rem] font-black text-2xl shadow-xl hover:scale-105 transition-all border-4 border-lumitel-blue uppercase italic">TIẾN VÀO BÁN KẾT ➔</button></div>
           </div>
         )}
 
-        {/* KNOCKOUT TAB */}
-        {activeTab === 'knockout' && data && data.matches.length > 0 && (
+        {activeTab === 'knockout' && data && (
           <div className="space-y-10 md:space-y-16">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-8 md:gap-14">
-              <div className="space-y-6 md:space-y-8">
-                <h3 className="text-xl md:text-3xl font-black text-lumitel-blue text-center uppercase italic border-b-4 border-gray-100 pb-3 md:pb-4">⚡ BÁN KẾT</h3>
-                <div className="grid gap-4 md:gap-8">
-                  {data.matches.filter(m => m.stage === MatchStage.SEMI_FINAL).map(m => (
-                    <MatchCard key={m.id} match={m} pairA={data.pairs.find(p => p.id === m.pairAId)!} pairB={data.pairs.find(p => p.id === m.pairBId)!} onUpdateScore={updateMatchScore} />
-                  ))}
-                </div>
-                <div className="flex justify-center"><button onClick={generateFinals} className="w-full md:w-auto bg-lumitel-blue text-white px-6 md:px-8 py-3 md:py-4 rounded-xl md:rounded-2xl font-black shadow-xl hover:bg-blue-800 transition-all uppercase italic text-sm md:text-base">XÁC NHẬN CHUNG KẾT ➔</button></div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-10 md:gap-14">
+              <div className="space-y-8">
+                <h3 className="text-xl md:text-3xl font-black text-lumitel-blue text-center uppercase italic border-b-4 border-gray-100 pb-4">⚡ BÁN KẾT</h3>
+                {data.matches.filter(m => m.stage === MatchStage.SEMI_FINAL).map(m => (
+                  <MatchCard key={m.id} match={m} pairA={data.pairs.find(p => p.id === m.pairAId)!} pairB={data.pairs.find(p => p.id === m.pairBId)!} onUpdateScore={updateMatchScore} />
+                ))}
+                <div className="flex justify-center"><button onClick={generateFinals} className="bg-lumitel-blue text-white px-8 py-4 rounded-xl font-black shadow-xl hover:bg-blue-800 transition-all uppercase italic">XÁC NHẬN CHUNG KẾT ➔</button></div>
               </div>
-              <div className="space-y-8 md:space-y-12">
-                <div className="space-y-6 md:space-y-8">
-                  <h3 className="text-xl md:text-3xl font-black text-lumitel-yellow bg-lumitel-blue p-4 md:p-5 rounded-2xl md:rounded-3xl text-center uppercase italic shadow-xl border-4 border-lumitel-yellow">🏆 CHUNG KẾT</h3>
+              <div className="space-y-12">
+                <div className="space-y-8">
+                  <h3 className="text-xl md:text-3xl font-black text-lumitel-yellow bg-lumitel-blue p-5 rounded-[2rem] text-center uppercase italic shadow-xl border-4 border-lumitel-yellow">🏆 CHUNG KẾT</h3>
                   {data.matches.filter(m => m.stage === MatchStage.FINAL).map(m => (
                     <MatchCard key={m.id} match={m} pairA={data.pairs.find(p => p.id === m.pairAId)!} pairB={data.pairs.find(p => p.id === m.pairBId)!} onUpdateScore={updateMatchScore} />
                   ))}
                 </div>
-                <div className="space-y-6 md:space-y-8 opacity-70">
+                <div className="space-y-8 opacity-70">
                   <h3 className="text-lg md:text-2xl font-black text-gray-500 text-center uppercase italic">🥉 TRANH HẠNG 3</h3>
                   {data.matches.filter(m => m.stage === MatchStage.THIRD_PLACE).map(m => (
                     <MatchCard key={m.id} match={m} pairA={data.pairs.find(p => p.id === m.pairAId)!} pairB={data.pairs.find(p => p.id === m.pairBId)!} onUpdateScore={updateMatchScore} />
@@ -509,82 +434,31 @@ const App: React.FC = () => {
           </div>
         )}
 
-        {/* RULES TAB */}
         {activeTab === 'rules' && data && (
-          <div className="bg-white p-6 md:p-16 rounded-[2rem] md:rounded-[4rem] shadow-xl md:shadow-2xl border border-gray-100 max-w-4xl mx-auto">
-            <div className="flex items-center gap-4 md:gap-6 mb-8 md:mb-12">
-              <div className="bg-lumitel-yellow p-3 md:p-5 rounded-2xl md:rounded-3xl shadow-lg">
-                <span className="text-2xl md:text-4xl">⚙️</span>
-              </div>
-              <h2 className="text-2xl md:text-5xl font-black text-lumitel-blue uppercase italic tracking-tighter leading-tight">CẤU HÌNH THỂ LỆ</h2>
+          <div className="bg-white p-10 md:p-16 rounded-[4rem] shadow-2xl border max-w-4xl mx-auto space-y-10">
+            <h2 className="text-3xl md:text-5xl font-black text-lumitel-blue uppercase italic tracking-tighter flex items-center gap-6">⚙️ THỂ LỆ</h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+              {['pointsToWinGroup', 'pointsToWinKnockout'].map(k => (
+                <div key={k} className="bg-gray-50 p-8 rounded-[2.5rem] border-2 border-transparent hover:border-lumitel-yellow transition-all">
+                  <label className="block text-xs font-black text-gray-400 uppercase tracking-widest mb-3 italic">{k === 'pointsToWinGroup' ? 'Chạm Vòng Bảng' : 'Chạm Vòng Loại'}</label>
+                  <input type="number" value={(data.config as any)[k]} onChange={(e) => updateConfig(k as any, parseInt(e.target.value))} className="w-full bg-white border-2 border-gray-100 rounded-3xl px-8 py-4 text-3xl font-black text-lumitel-blue outline-none" />
+                </div>
+              ))}
             </div>
-            
-            <div className="space-y-6 md:space-y-10">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-8">
-                <div className="bg-gray-50 p-6 md:p-8 rounded-2xl md:rounded-[2rem] border-2 border-transparent hover:border-lumitel-yellow transition-all">
-                  <label className="block text-[10px] md:text-sm font-black text-gray-400 uppercase tracking-widest mb-2 md:mb-3">Điểm chạm Vòng Bảng</label>
-                  <div className="flex items-center gap-3 md:gap-4">
-                    <input 
-                      type="number" 
-                      value={data.config.pointsToWinGroup}
-                      onChange={(e) => updateConfig('pointsToWinGroup', parseInt(e.target.value))}
-                      className="w-full bg-white border-2 border-gray-200 rounded-xl md:rounded-2xl px-4 py-3 md:px-6 md:py-4 text-xl md:text-3xl font-black text-lumitel-blue focus:ring-4 focus:ring-lumitel-yellow outline-none transition-all"
-                    />
-                    <span className="text-lg md:text-2xl font-black text-gray-300">PTS</span>
-                  </div>
-                </div>
-
-                <div className="bg-gray-50 p-6 md:p-8 rounded-2xl md:rounded-[2rem] border-2 border-transparent hover:border-lumitel-yellow transition-all">
-                  <label className="block text-[10px] md:text-sm font-black text-gray-400 uppercase tracking-widest mb-2 md:mb-3">Điểm chạm Vòng Loại</label>
-                  <div className="flex items-center gap-3 md:gap-4">
-                    <input 
-                      type="number" 
-                      value={data.config.pointsToWinKnockout}
-                      onChange={(e) => updateConfig('pointsToWinKnockout', parseInt(e.target.value))}
-                      className="w-full bg-white border-2 border-gray-200 rounded-xl md:rounded-2xl px-4 py-3 md:px-6 md:py-4 text-xl md:text-3xl font-black text-lumitel-blue focus:ring-4 focus:ring-lumitel-yellow outline-none transition-all"
-                    />
-                    <span className="text-lg md:text-2xl font-black text-gray-300">PTS</span>
-                  </div>
-                </div>
-              </div>
-
-              <div className="bg-lumitel-blue text-white p-6 md:p-8 rounded-[1.5rem] md:rounded-[2.5rem] shadow-xl flex flex-col md:flex-row items-center justify-between gap-5 md:gap-6 text-center md:text-left">
-                <div className="flex flex-col md:flex-row items-center gap-4 md:gap-6">
-                   <div className="w-12 h-12 md:w-16 md:h-16 bg-white/10 rounded-xl md:rounded-2xl flex items-center justify-center text-2xl md:text-3xl border border-white/20">⚖️</div>
-                   <div>
-                      <h4 className="text-base md:text-xl font-black uppercase italic text-lumitel-yellow">Thắng cách biệt</h4>
-                      <p className="text-[10px] md:text-sm font-bold opacity-70">Chênh lệch tối thiểu 2 điểm</p>
-                   </div>
-                </div>
-                <button 
-                  onClick={() => updateConfig('winByTwo', !data.config.winByTwo)}
-                  className={`w-full md:w-auto px-8 py-4 md:px-10 md:py-5 rounded-xl md:rounded-2xl font-black text-base md:text-xl transition-all shadow-lg active:scale-95 border-b-4 ${
-                    data.config.winByTwo 
-                    ? 'bg-lumitel-yellow text-lumitel-blue border-yellow-600' 
-                    : 'bg-white/20 text-white border-white/10 hover:bg-white/30'
-                  }`}
-                >
-                  {data.config.winByTwo ? 'BẬT (ON)' : 'TẮT (OFF)'}
-                </button>
-              </div>
-
-              <div className="mt-10 md:mt-16 flex flex-col items-center gap-4">
-                 <button 
-                   onClick={resetTournament}
-                   className="w-full bg-red-50 text-red-500 px-6 py-4 md:py-5 rounded-xl md:rounded-2xl font-black uppercase italic border-2 border-red-100 hover:bg-red-500 hover:text-white transition-all flex items-center justify-center gap-2 md:gap-3 text-sm md:text-base"
-                 >
-                   ⚠️ LÀM MỚI GIẢI ĐẤU
-                 </button>
-              </div>
+            <div className="bg-lumitel-blue text-white p-8 rounded-[3rem] shadow-lg flex items-center justify-between">
+               <h4 className="text-xl font-black uppercase italic text-lumitel-yellow">THẮNG CÁCH BIỆT (2 ĐIỂM)</h4>
+               <button onClick={() => updateConfig('winByTwo', !data.config.winByTwo)} className={`px-10 py-5 rounded-2xl font-black text-lg transition-all shadow-xl active:scale-95 border-b-4 ${data.config.winByTwo ? 'bg-lumitel-yellow text-lumitel-blue border-yellow-600' : 'bg-white/20 text-white border-white/10'}`}>
+                 {data.config.winByTwo ? 'BẬT' : 'TẮT'}
+               </button>
             </div>
+            <button onClick={resetTournament} className="w-full bg-red-50 text-red-500 py-6 rounded-3xl font-black uppercase italic border-2 border-red-100 hover:bg-red-500 hover:text-white transition-all">⚠️ LÀM MỚI GIẢI ĐẤU</button>
           </div>
         )}
-
       </main>
 
-      <footer className="fixed bottom-0 w-full bg-lumitel-blue text-white py-2 md:py-4 px-4 md:px-8 flex justify-between items-center z-40 border-t-2 md:border-t-4 border-lumitel-yellow shadow-2xl">
-        <div className="flex items-center gap-2 md:gap-4"><div className="bg-lumitel-yellow text-lumitel-blue w-7 h-7 md:w-10 md:h-10 rounded-lg md:rounded-xl flex items-center justify-center font-black text-[10px] md:text-base">10</div><span className="font-black italic uppercase text-[8px] md:text-sm">Lumitel Burundi - 10 Years</span></div>
-        <div className="text-[7px] md:text-[10px] font-black opacity-50 uppercase tracking-widest text-right">Hội Bu Kiều Burundi</div>
+      <footer className="fixed bottom-0 w-full bg-lumitel-blue text-white py-4 px-8 flex justify-between items-center z-40 border-t-4 border-lumitel-yellow shadow-2xl">
+        <div className="flex items-center gap-4"><div className="bg-lumitel-yellow text-lumitel-blue w-10 h-10 rounded-xl flex items-center justify-center font-black text-lg shadow-lg">10</div><span className="font-black italic uppercase text-sm tracking-wider">Lumitel Burundi - 10 Years</span></div>
+        <div className="text-[10px] font-black opacity-50 uppercase tracking-[0.2em] text-right">Hội Bu Kiều Burundi</div>
       </footer>
     </div>
   );
