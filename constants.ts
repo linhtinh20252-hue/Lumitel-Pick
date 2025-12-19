@@ -1,22 +1,22 @@
 import { Player } from './types';
 
 export const INITIAL_PLAYERS: Player[] = [
-  { id: '1', name: 'Lê Huy Hoàng' },
-  { id: '2', name: 'Nguyễn Việt Hinh' },
-  { id: '3', name: 'Trần Tử Long' },
-  { id: '4', name: 'Nguyễn Huy Quỳnh' },
-  { id: '5', name: 'Văn Phúc Huân' },
-  { id: '6', name: 'Hà Thế Dương' },
-  { id: '7', name: 'Trần Quang Minh' },
-  { id: '8', name: 'Nguyễn Văn Lam' },
-  { id: '9', name: 'Nguyễn Chính Chung' },
-  { id: '10', name: 'Hoa Quốc Dũng' },
-  { id: '11', name: 'Nguyễn Thanh Hải' },
-  { id: '12', name: 'Ngô Hùng Sơn' },
-  { id: '13', name: 'Đặng Mạnh Chiến' },
-  { id: '14', name: 'Nguyễn Bá Thiết' },
-  { id: '15', name: 'Trần Quốc Việt' },
-  { id: '16', name: 'Nguyễn Thành Chung' },
+  { id: '1', name: 'HOANG-LH' },
+  { id: '2', name: 'HINH-NV' },
+  { id: '3', name: 'LONG-TT' },
+  { id: '4', name: 'QUYNH-NH' },
+  { id: '5', name: 'HUAN-VP' },
+  { id: '6', name: 'DUONG-HT' },
+  { id: '7', name: 'MINH-TQ' },
+  { id: '8', name: 'LAM-NV' },
+  { id: '9', name: 'CHUNG-NC' },
+  { id: '10', name: 'DUNG-HQ' },
+  { id: '11', name: 'HAI-NT' },
+  { id: '12', name: 'SON-NH' },
+  { id: '13', name: 'CHIEN-DM' },
+  { id: '14', name: 'THIET-NB' },
+  { id: '15', name: 'VIET-TQ' },
+  { id: '16', name: 'CHUNG-NT' },
 ];
 
 export const GROUP_MATCH_TEMPLATE = [

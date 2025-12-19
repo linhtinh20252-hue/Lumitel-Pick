@@ -257,22 +257,21 @@ const App: React.FC = () => {
               <p className="text-gray-500 font-bold bg-gray-100 px-4 py-2 rounded-xl">Nhấn trực tiếp vào tên để sửa đổi</p>
             </div>
             
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
               {data.players.map((player, idx) => (
-                <div key={player.id} className="group flex items-center bg-gray-50 p-6 rounded-[2rem] border-2 border-transparent hover:border-lumitel-yellow hover:bg-white hover:shadow-2xl transition-all duration-300">
-                  <div className="w-12 h-12 bg-lumitel-blue text-white rounded-2xl flex items-center justify-center font-black text-lg shrink-0 shadow-lg mr-6">
+                <div key={player.id} className="group flex items-center bg-gray-50 p-5 rounded-[1.5rem] border-2 border-transparent hover:border-lumitel-yellow hover:bg-white hover:shadow-2xl transition-all duration-300">
+                  <div className="w-10 h-10 bg-lumitel-blue text-white rounded-xl flex items-center justify-center font-black text-base shrink-0 shadow-lg mr-4">
                     {idx + 1}
                   </div>
-                  <div className="flex-1">
-                    <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1 block">Tên VĐV</label>
+                  <div className="flex-1 overflow-hidden">
+                    <label className="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-0.5 block">Tên VĐV</label>
                     <input 
                       type="text" 
                       value={player.name}
                       onChange={(e) => updateAthleteName(player.id, e.target.value)}
-                      className="w-full bg-transparent border-none focus:ring-0 font-black text-gray-900 text-2xl placeholder-gray-300 uppercase italic tracking-tighter"
+                      className="w-full bg-transparent border-none focus:ring-0 font-black text-gray-900 text-lg placeholder-gray-300 uppercase italic tracking-tighter truncate"
                     />
                   </div>
-                  <div className="text-lumitel-yellow text-2xl opacity-0 group-hover:opacity-100 transition-opacity">🖋️</div>
                 </div>
               ))}
             </div>
