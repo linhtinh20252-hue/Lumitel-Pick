@@ -1,6 +1,7 @@
+
 import React, { useState, useEffect } from 'react';
 import { Player, Pair, Match, TournamentData, MatchStage } from './types';
-import { INITIAL_PLAYERS, LOGO_SVG } from './constants';
+import { INITIAL_PLAYERS, LOGO_SVG, LUMITEL_LOGO_SVG } from './constants';
 import { saveTournament, loadTournament, clearTournament } from './services/storageService';
 import { calculateStandings } from './utils/rankings';
 import MatchCard from './components/MatchCard';
@@ -279,8 +280,14 @@ const App: React.FC = () => {
       <header className="bg-lumitel-blue text-white overflow-hidden relative shadow-2xl border-b-[4px] md:border-b-[6px] border-lumitel-yellow">
         <div className="max-w-7xl mx-auto px-4 md:px-6 py-8 md:py-12 flex flex-col lg:flex-row items-center justify-between gap-6 md:gap-10 relative z-10">
           <div className="text-center lg:text-left flex-1">
-            <div className="inline-block bg-white/10 backdrop-blur-md border border-white/20 px-3 py-1 rounded-xl mb-4 transform -rotate-2">
-              <span className="text-lumitel-yellow font-black tracking-widest uppercase italic text-[10px] md:text-sm">Hội Bu Kiều Burundi Presents</span>
+            <div className="flex items-center justify-center lg:justify-start gap-4 mb-4">
+               {/* Logo Lumitel Header */}
+               <div className="w-24 h-10 bg-lumitel-yellow rounded-lg overflow-hidden shadow-md flex items-center justify-center">
+                  <img src={LUMITEL_LOGO_SVG} alt="Lumitel" className="w-full h-full object-contain" />
+               </div>
+               <div className="inline-block bg-lumitel-yellow px-3 py-1 rounded-xl transform -rotate-2 shadow-sm">
+                 <span className="text-lumitel-blue font-black tracking-widest uppercase italic text-[10px] md:text-sm">Hội Bu Kiều Burundi Presents</span>
+               </div>
             </div>
             <h1 className="text-3xl sm:text-5xl md:text-7xl font-black mb-3 leading-none tracking-tighter uppercase italic drop-shadow-2xl">
               KỶ NIỆM <span className="text-lumitel-yellow">10 NĂM</span> <br/>LUMITEL BURUNDI
@@ -457,7 +464,13 @@ const App: React.FC = () => {
       </main>
 
       <footer className="fixed bottom-0 w-full bg-lumitel-blue text-white py-4 px-8 flex justify-between items-center z-40 border-t-4 border-lumitel-yellow shadow-2xl">
-        <div className="flex items-center gap-4"><div className="bg-lumitel-yellow text-lumitel-blue w-10 h-10 rounded-xl flex items-center justify-center font-black text-lg shadow-lg">10</div><span className="font-black italic uppercase text-sm tracking-wider">Lumitel Burundi - 10 Years</span></div>
+        <div className="flex items-center gap-4">
+          <div className="w-16 h-7 bg-lumitel-yellow rounded overflow-hidden shadow-inner flex items-center justify-center">
+            <img src={LUMITEL_LOGO_SVG} alt="Lumitel Logo" className="w-full h-full object-contain" />
+          </div>
+          <div className="bg-lumitel-yellow text-lumitel-blue w-10 h-10 rounded-xl flex items-center justify-center font-black text-lg shadow-lg">10</div>
+          <span className="font-black italic uppercase text-sm tracking-wider">Lumitel Burundi - 10 Years</span>
+        </div>
         <div className="text-[10px] font-black opacity-50 uppercase tracking-[0.2em] text-right">Hội Bu Kiều Burundi</div>
       </footer>
     </div>
