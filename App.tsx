@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Player, Pair, Match, TournamentData, MatchStage } from './types';
 import { INITIAL_PLAYERS, LOGO_SVG } from './constants';
@@ -7,10 +6,47 @@ import { calculateStandings } from './utils/rankings';
 import MatchCard from './components/MatchCard';
 import StandingTable from './components/StandingTable';
 
+// Hiệu ứng pháo hoa rực rỡ hơn
+const Confetti = ({ onClose }: { onClose: () => void }) => {
+  return (
+    <div className="fixed inset-0 pointer-events-none z-[100] overflow-hidden">
+      {[...Array(80)].map((_, i) => (
+        <div
+          key={i}
+          className="absolute w-3 h-3 rounded-sm animate-bounce"
+          style={{
+            left: `${Math.random() * 100}%`,
+            top: `${-10 - Math.random() * 20}%`,
+            backgroundColor: ['#FFE200', '#005696', '#FF5733', '#C70039', '#900C3F', '#FFFFFF', '#00FF00'][Math.floor(Math.random() * 7)],
+            animationDelay: `${Math.random() * 3}s`,
+            animationDuration: `${2 + Math.random() * 3}s`,
+            transform: `rotate(${Math.random() * 360}deg)`,
+            opacity: 0.9
+          }}
+        />
+      ))}
+      <div className="absolute inset-0 bg-black/40 backdrop-blur-md flex items-center justify-center animate-in fade-in duration-700 pointer-events-auto">
+         <div className="bg-white p-12 md:p-20 rounded-[4rem] shadow-2xl border-[12px] border-lumitel-yellow text-center transform scale-110 animate-bounce">
+            <div className="text-7xl md:text-9xl mb-6">🏆</div>
+            <h2 className="text-4xl md:text-8xl font-black text-lumitel-blue mb-4 italic uppercase tracking-tighter leading-none">NHÀ VÔ ĐỊCH!</h2>
+            <p className="text-lg md:text-3xl font-bold text-gray-500 uppercase tracking-[0.3em] mb-10">KỶ NIỆM 10 NĂM LUMITEL</p>
+            <button 
+              onClick={onClose}
+              className="bg-lumitel-blue text-white px-10 py-4 rounded-full font-black hover:scale-110 transition-transform pointer-events-auto shadow-xl text-xl uppercase italic"
+            >
+              HOÀN TẤT GIẢI ĐẤU
+            </button>
+         </div>
+      </div>
+    </div>
+  );
+};
+
 const App: React.FC = () => {
   const [data, setData] = useState<TournamentData | null>(null);
   const [activeTab, setActiveTab] = useState<'athletes' | 'pairs' | 'group' | 'knockout' | 'rules'>('athletes');
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
+  const [showCelebration, setShowCelebration] = useState(false);
 
   useEffect(() => {
     const saved = loadTournament();
@@ -157,17 +193,25 @@ const App: React.FC = () => {
   const updateMatchScore = (matchId: string, scoreA: number, scoreB: number) => {
     setData(prev => {
       if (!prev) return null;
+      const newMatches = prev.matches.map(m => (m.id === matchId ? {
+        ...m, scoreA, scoreB, winnerId: scoreA > scoreB ? m.pairAId : m.pairBId, isCompleted: true
+      } : m));
+
+      // Kiểm tra nếu là trận chung kết được cập nhật xong
+      const currentMatch = newMatches.find(m => m.id === matchId);
+      if (currentMatch?.stage === MatchStage.FINAL && currentMatch.isCompleted) {
+        setShowCelebration(true);
+      }
+
       return {
         ...prev,
-        matches: prev.matches.map(m => (m.id === matchId ? {
-          ...m, scoreA, scoreB, winnerId: scoreA > scoreB ? m.pairAId : m.pairBId, isCompleted: true
-        } : m))
+        matches: newMatches
       };
     });
   };
 
   const resetTournament = () => {
-    if (confirm("Bạn có chắc chắn muốn xoá toàn bộ dữ liệu và bắt đầu lại?")) {
+    if (window.confirm("Bạn có chắc chắn muốn xoá toàn bộ dữ liệu và bắt đầu lại?")) {
       clearTournament();
       window.location.reload();
     }
@@ -222,6 +266,8 @@ const App: React.FC = () => {
 
   return (
     <div className="min-h-screen pb-20 bg-gray-50 text-gray-900 selection:bg-lumitel-yellow selection:text-lumitel-blue">
+      {showCelebration && <Confetti onClose={() => setShowCelebration(false)} />}
+
       {/* 🚀 RESPONSIVE HEADER */}
       <header className="bg-lumitel-blue text-white overflow-hidden relative shadow-2xl border-b-[4px] md:border-b-[6px] border-lumitel-yellow">
         <div className="max-w-7xl mx-auto px-4 md:px-6 py-8 md:py-12 flex flex-col lg:flex-row items-center justify-between gap-6 md:gap-10 relative z-10">
@@ -460,15 +506,6 @@ const App: React.FC = () => {
                 </div>
               </div>
             </div>
-            {data.matches.find(m => m.id === 'm-final')?.isCompleted && (
-              <div className="bg-gradient-to-br from-lumitel-blue via-blue-900 to-black rounded-[2rem] md:rounded-[4rem] p-8 md:p-16 text-center text-white shadow-2xl border-b-[8px] md:border-b-[15px] border-lumitel-yellow max-w-5xl mx-auto mt-10 md:mt-20">
-                <h2 className="text-2xl md:text-5xl font-black mb-6 md:mb-10 tracking-[0.1em] md:tracking-[0.2em] uppercase italic">👑 NHÀ VÔ ĐỊCH 👑</h2>
-                <p className="text-3xl sm:text-5xl md:text-8xl font-black text-lumitel-yellow drop-shadow-2xl uppercase italic tracking-tighter line-clamp-2">
-                  {data.pairs.find(p => p.id === data.matches.find(m => m.id === 'm-final')?.winnerId)?.name}
-                </p>
-                <div className="mt-8 md:mt-14 text-4xl md:text-7xl animate-pulse">🎊 🏆 🎊</div>
-              </div>
-            )}
           </div>
         )}
 
@@ -529,21 +566,6 @@ const App: React.FC = () => {
                 >
                   {data.config.winByTwo ? 'BẬT (ON)' : 'TẮT (OFF)'}
                 </button>
-              </div>
-
-              <div className="bg-gray-50 p-6 md:p-10 rounded-[1.5rem] md:rounded-[2.5rem] border-l-[6px] md:border-l-[10px] border-lumitel-blue">
-                <h4 className="text-lg md:text-2xl font-black text-lumitel-blue mb-4 md:mb-6 uppercase italic">TÓM TẮT THỂ LỆ</h4>
-                <ul className="space-y-3 md:space-y-4 text-sm md:text-lg font-bold text-gray-700">
-                  <li className="flex items-center gap-2 md:gap-3">
-                    <span>🎾</span> Vòng bảng: Chạm <span className="text-lumitel-blue">{data.config.pointsToWinGroup}</span>.
-                  </li>
-                  <li className="flex items-center gap-2 md:gap-3">
-                    <span>🏆</span> Vòng loại: Chạm <span className="text-lumitel-blue">{data.config.pointsToWinKnockout}</span>.
-                  </li>
-                  <li className="flex items-center gap-2 md:gap-3">
-                    <span>⚡</span> {data.config.winByTwo ? 'CÓ' : 'KHÔNG'} thắng cách biệt 2 điểm.
-                  </li>
-                </ul>
               </div>
 
               <div className="mt-10 md:mt-16 flex flex-col items-center gap-4">
