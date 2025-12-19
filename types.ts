@@ -19,17 +19,25 @@ export enum MatchStage {
   FINAL = 'FINAL'
 }
 
+export interface SetScore {
+  a: number;
+  b: number;
+}
+
 export interface Match {
   id: string;
   stage: MatchStage;
   pairAId: string;
   pairBId: string;
-  scoreA: number | null;
-  scoreB: number | null;
+  scoreA: number | null; // Số set thắng của đội A
+  scoreB: number | null; // Số set thắng của đội B
+  sets?: SetScore[];     // Điểm số chi tiết từng hiệp (set)
   winnerId: string | null;
   isCompleted: boolean;
   label?: string;
-  targetScore: number; // 11 or 15
+  targetScore: number;   // Điểm chạm: 11, 15, v.v.
+  matchFormat: 1 | 3;    // Số trận: 1 hoặc 3 (Best of 3)
+  winByTwo: boolean;     // Thắng cách biệt 2 điểm
 }
 
 export interface Standing {
@@ -44,13 +52,19 @@ export interface Standing {
   rank: number;
 }
 
+export interface StageConfig {
+  matchFormat: 1 | 3;
+  targetScore: number;
+  winByTwo: boolean;
+}
+
 export interface TournamentData {
   players: Player[];
   pairs: Pair[];
   matches: Match[];
   config: {
-    pointsToWinGroup: number;
-    pointsToWinKnockout: number;
-    winByTwo: boolean;
+    group: StageConfig;
+    knockout: StageConfig;
+    isLocked: boolean; // Chốt thể lệ
   };
 }

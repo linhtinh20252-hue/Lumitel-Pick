@@ -24,10 +24,22 @@ export const calculateStandings = (pairs: Pair[], matches: Match[]): Standing[] 
 
     sA.played++;
     sB.played++;
-    sA.pointsFor += m.scoreA || 0;
-    sA.pointsAgainst += m.scoreB || 0;
-    sB.pointsFor += m.scoreB || 0;
-    sB.pointsAgainst += m.scoreA || 0;
+
+    // Tính điểm số dựa trên sets nếu có, nếu không dùng scoreA/scoreB cũ
+    if (m.sets && m.sets.length > 0) {
+      m.sets.forEach(set => {
+        if (set.a === 0 && set.b === 0) return;
+        sA.pointsFor += set.a;
+        sA.pointsAgainst += set.b;
+        sB.pointsFor += set.b;
+        sB.pointsAgainst += set.a;
+      });
+    } else {
+      sA.pointsFor += m.scoreA || 0;
+      sA.pointsAgainst += m.scoreB || 0;
+      sB.pointsFor += m.scoreB || 0;
+      sB.pointsAgainst += m.scoreA || 0;
+    }
 
     if ((m.scoreA || 0) > (m.scoreB || 0)) {
       sA.wins++;
@@ -44,11 +56,6 @@ export const calculateStandings = (pairs: Pair[], matches: Match[]): Standing[] 
     rank: 0
   }));
 
-  // Ranking Logic:
-  // 1. Wins
-  // 2. Point Diff
-  // 3. Points For
-  // 4. Head-to-head (simplification: we sort by the first 3 primarily here)
   standings.sort((a, b) => {
     if (b.wins !== a.wins) return b.wins - a.wins;
     if (b.pointDiff !== a.pointDiff) return b.pointDiff - a.pointDiff;
