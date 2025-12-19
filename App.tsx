@@ -195,7 +195,7 @@ const App: React.FC = () => {
               Giải Pickleball Open 2025 - 10 năm phát triển tại Burundi.
             </p>
             <div className="flex flex-wrap justify-center lg:justify-start gap-4 mt-8">
-              <div className="bg-lumitel-yellow text-lumitel-blue px-6 py-3 rounded-2xl font-black shadow-[0_10px_0_#CCB500]">HÀ NỘI 03/2025</div>
+              <div className="bg-lumitel-yellow text-lumitel-blue px-6 py-3 rounded-2xl font-black shadow-[0_10px_0_#CCB500]">HÀ NỘI, 20/12/2025</div>
               <div className="bg-white/10 backdrop-blur-md border border-white/20 px-6 py-3 rounded-2xl font-black">16 VẬN ĐỘNG VIÊN 🎾</div>
             </div>
           </div>
