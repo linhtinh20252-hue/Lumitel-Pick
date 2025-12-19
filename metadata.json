@@ -1,0 +1,5 @@
+{
+  "name": "Lumitel Pickleball Tournament Manager",
+  "description": "A comprehensive tournament management app for the Lumitel 10th Anniversary Pickleball event, featuring group stage tracking, automated standings, and knockout brackets.",
+  "requestFramePermissions": []
+}
